@@ -13,6 +13,7 @@ Demo path: `pnpm dev` → open local Vite preview.
 - FEAT-005: Chord arrange (drag, copy/paste, add) — status: done
 - FEAT-006: Default startup key/mode = C minor — status: done
 - FEAT-007: Export MIDI button — status: done
+- FEAT-008A: UI grouping (Group→Next, Group All, TIED badges) — status: done
 
 3. UX Map
 Screens:
@@ -27,6 +28,7 @@ Key modules:
 - src/core/generator.ts: Progression factory and Smart Swap engine
 - tests/unit/theory.test.ts: Deterministic coverage for theory primitives
 - tests/unit/generator.test.ts: Deterministic Smart Swap assertions
+- tests/e2e/grouping-ui.test.tsx: UI-only acceptance for grouping toggles/badges
 - src/services/MidiExporter.ts: Minimal MIDI writer and download helper
 - src/audio/instruments.ts: Instrument registry, synth/piano scheduling, caching
 - src/audio/sampler.ts: Grand Piano sample loading and playback wrappers
@@ -61,3 +63,11 @@ Default startup key/mode:
 11. Acceptance Status — FEAT-007
 Export MIDI:
 ✅ Given a generated progression (data), when the user clicks Export MIDI, a Blob of type `audio/midi` is created and download is triggered (tests/unit/midiExporter.test.ts, tests/e2e/midi-export.test.tsx).
+
+12. Acceptance Status — FEAT-008A
+UI grouping (no audio changes):
+✅ Given data state, when **Group→Next** is toggled on chord 1, then chord 1 and 2 show a **TIED** badge (tests/e2e/grouping-ui.test.tsx).
+✅ Given data state, when **Group All** is toggled on, then all chord tiles show **TIED** (tests/e2e/grouping-ui.test.tsx).
+✅ Given a **reorder** operation, `groupNext[]` resets and TIED badges clear unless toggled again (tests/e2e/grouping-ui.test.tsx).
+
+Planned: FEAT-008B — Audio scheduler & tie integration (note-event computation, no duplicate note-ons).
