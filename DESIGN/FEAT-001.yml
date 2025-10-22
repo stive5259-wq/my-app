@@ -38,9 +38,10 @@ files_to_touch:
 - src/App.tsx
 - src/components/Controls.tsx
 - src/components/ProgressionDisplay.tsx
+- src/components/PianoRoll.tsx
 - src/core/generator.ts
 - src/services/AudioPlayer.ts
-- tests/e2e/generation.test.ts
+- tests/e2e/generation.test.tsx
 coding_standards:
 - tsconfig: strict true
 - no external audio libs (WebAudio only in this feature)
@@ -58,8 +59,19 @@ acceptance_tests:
 - "Generate is disabled while generating; Play is disabled while generating."
 - "No console errors during Generate → Play → Stop loop."
 
+goals:
+- Generate progression (Cmaj, Gmaj, Am, Fmaj stub)
+- Piano Roll visualization showing notes on timeline
+- Audio playback with WebAudio (Play/Stop/Space key)
+- Basic chord swapping (click chord to swap to new valid option)
+- State management (idle → generating → ready → playing)
+
 non_goals:
-- advanced theory, swapping, Piano Roll, MIDI IO, offline/PWA
+- Advanced music theory / beauty heuristics (voice leading, tensions)
+- MIDI export/import
+- Offline/PWA shell
+- VST conversion
+- Complex UI (scales selector, chord library, etc.)
 
 risks:
 - WebAudio lifecycle quirks (user gesture requirement); mitigated by button/Space triggering
