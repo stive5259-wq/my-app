@@ -19,6 +19,7 @@ function App() {
   const [swapMode, setSwapMode] = useState<SwapMode>('harmony');
   const [selectedKey, setSelectedKey] = useState<NoteName>('C');
   const [selectedMode, setSelectedMode] = useState<Mode>('major');
+  const [currentPlayingChord, setCurrentPlayingChord] = useState<number>(-1);
   const audioPlayerRef = useRef<AudioPlayer>(new AudioPlayer());
 
   const handleGenerate = () => {
@@ -42,9 +43,17 @@ function App() {
     if (!progression || state !== 'ready') return;
 
     setState('playing');
-    audioPlayerRef.current.play(progression, () => {
-      setState('ready');
-    });
+    setCurrentPlayingChord(0);
+    audioPlayerRef.current.play(
+      progression,
+      () => {
+        setState('ready');
+        setCurrentPlayingChord(-1);
+      },
+      (chordIndex) => {
+        setCurrentPlayingChord(chordIndex);
+      }
+    );
   };
 
   const handleStop = () => {
@@ -52,6 +61,7 @@ function App() {
 
     audioPlayerRef.current.stop();
     setState('ready');
+    setCurrentPlayingChord(-1);
   };
 
   const handleSwapChord = (index: number) => {
@@ -201,6 +211,7 @@ function App() {
         progression={progression}
         onSwapChord={state === 'ready' ? handleSwapChord : undefined}
         getDisplayName={getChordDisplayName}
+        currentPlayingChord={state === 'playing' ? currentPlayingChord : -1}
       />
       <PianoRoll progression={progression} />
     </div>
