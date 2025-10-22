@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { generateProgression, smartSwap, getChordDisplayName, type Progression, type SwapMode } from './core/generator';
 import type { NoteName, Mode } from './core/theory';
 import { AudioPlayer } from './services/AudioPlayer';
 import { Controls } from './components/Controls';
 import { ProgressionDisplay } from './components/ProgressionDisplay';
 import { PianoRoll } from './components/PianoRoll';
+import { useInstrument } from './hooks/useInstrument';
+import { InstrumentSelect } from './components/InstrumentSelect';
 
 type AppState = 'idle' | 'generating' | 'ready' | 'playing' | 'error';
 
@@ -21,6 +23,14 @@ function App() {
   const [selectedMode, setSelectedMode] = useState<Mode>('major');
   const [currentPlayingChord, setCurrentPlayingChord] = useState<number>(-1);
   const audioPlayerRef = useRef<AudioPlayer>(new AudioPlayer());
+  const {
+    instrumentId,
+    options: instrumentOptions,
+    loadingId: loadingInstrumentId,
+    error: instrumentError,
+    selectInstrument,
+    clearError: clearInstrumentError,
+  } = useInstrument();
 
   const handleGenerate = () => {
     setState('generating');
@@ -39,30 +49,38 @@ function App() {
     }, 100);
   };
 
-  const handlePlay = () => {
+  const handlePlay = useCallback(async () => {
     if (!progression || state !== 'ready') return;
 
     setState('playing');
     setCurrentPlayingChord(0);
-    audioPlayerRef.current.play(
-      progression,
-      () => {
-        setState('ready');
-        setCurrentPlayingChord(-1);
-      },
-      (chordIndex) => {
-        setCurrentPlayingChord(chordIndex);
-      }
-    );
-  };
+    try {
+      await audioPlayerRef.current.play(
+        progression,
+        instrumentId,
+        () => {
+          setState('ready');
+          setCurrentPlayingChord(-1);
+        },
+        (chordIndex) => {
+          setCurrentPlayingChord(chordIndex);
+        }
+      );
+    } catch (err) {
+      console.error('Playback failed', err);
+      setError(err instanceof Error ? err.message : 'Playback failed');
+      setState('error');
+      setCurrentPlayingChord(-1);
+    }
+  }, [instrumentId, progression, state]);
 
-  const handleStop = () => {
+  const handleStop = useCallback(() => {
     if (state !== 'playing') return;
 
     audioPlayerRef.current.stop();
     setState('ready');
     setCurrentPlayingChord(-1);
-  };
+  }, [state]);
 
   const handleTestAudio = async () => {
     console.log('🔊 Testing audio with simple tone...');
@@ -114,7 +132,7 @@ function App() {
     setSwapCount(swapCount + 1);
   };
 
-  const handleSpaceKey = (event: KeyboardEvent) => {
+  const handleSpaceKey = useCallback((event: KeyboardEvent) => {
     // Only handle Space if not focused on an input element
     const target = event.target as HTMLElement;
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
@@ -125,21 +143,27 @@ function App() {
       event.preventDefault();
 
       if (state === 'ready' && progression) {
-        handlePlay();
+        void handlePlay();
       } else if (state === 'playing') {
         handleStop();
       }
     }
-  };
+  }, [handlePlay, handleStop, progression, state]);
 
   useEffect(() => {
-    window.addEventListener('keydown', handleSpaceKey);
+    const player = audioPlayerRef.current;
+    const onKeyDown = (event: KeyboardEvent) => handleSpaceKey(event);
+    window.addEventListener('keydown', onKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleSpaceKey);
+      window.removeEventListener('keydown', onKeyDown);
       // Cleanup audio on unmount
-      audioPlayerRef.current.stop();
+      player.stop();
     };
-  }, [state, progression]);
+  }, [handleSpaceKey]);
+
+  const handlePlayClick = useCallback(() => {
+    void handlePlay();
+  }, [handlePlay]);
 
   return (
     <div>
@@ -147,6 +171,17 @@ function App() {
       <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '-0.5rem' }}>
         Smart Swap Chord Generator
       </p>
+
+      <InstrumentSelect
+        instrumentId={instrumentId}
+        options={instrumentOptions}
+        loadingId={loadingInstrumentId}
+        error={instrumentError}
+        onSelect={(id) => {
+          void selectInstrument(id);
+        }}
+        onClearError={clearInstrumentError}
+      />
 
       {/* Key & Mode Selection */}
       <div style={{
@@ -202,7 +237,7 @@ function App() {
       <Controls
         state={state}
         onGenerate={handleGenerate}
-        onPlay={handlePlay}
+        onPlay={handlePlayClick}
         onStop={handleStop}
         hasProgression={!!progression}
       />

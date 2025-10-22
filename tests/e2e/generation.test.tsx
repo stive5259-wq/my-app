@@ -7,11 +7,15 @@ import App from '../../src/App';
 class MockAudioContext {
   currentTime = 0;
   destination = {};
+  state: AudioContextState = 'running';
 
   createOscillator() {
     return {
       type: 'sine',
-      frequency: { value: 440 },
+      frequency: {
+        value: 440,
+        setValueAtTime: vi.fn(),
+      },
       connect: vi.fn(),
       start: vi.fn(),
       stop: vi.fn(),
@@ -21,11 +25,16 @@ class MockAudioContext {
   createGain() {
     return {
       gain: {
+        cancelScheduledValues: vi.fn(),
         setValueAtTime: vi.fn(),
         linearRampToValueAtTime: vi.fn(),
       },
       connect: vi.fn(),
     };
+  }
+
+  resume() {
+    return Promise.resolve();
   }
 
   close() {

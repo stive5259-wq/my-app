@@ -9,6 +9,7 @@ Demo path: `pnpm dev` → open local Vite preview.
 2. Current Capabilities (Atomic)
 - FEAT-001: E2E skeleton (generate → play) — status: done
 - FEAT-003: Deterministic theory + Smart Swap unit tests — status: done
+- FEAT-004: Grand Piano instrument selection with cached samples — status: done
 
 3. UX Map
 Screens:
@@ -23,6 +24,10 @@ Key modules:
 - src/core/generator.ts: Progression factory and Smart Swap engine
 - tests/unit/theory.test.ts: Deterministic coverage for theory primitives
 - tests/unit/generator.test.ts: Deterministic Smart Swap assertions
+- src/audio/instruments.ts: Instrument registry, synth/piano scheduling, caching
+- src/audio/sampler.ts: Grand Piano sample loading and playback wrappers
+- src/hooks/useInstrument.ts: React hook for instrument persistence and preload
+- src/components/InstrumentSelect.tsx: Instrument menu with status/error messaging
 
 5. Data and Contracts
 Entities:
