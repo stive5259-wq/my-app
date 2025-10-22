@@ -27,4 +27,8 @@
 
 6. **No console errors**
 - Given a full Generate → Play → Stop loop
-- Then the dev console contains no `error` entries
+- Then the dev console contains no `error` entries- [ ] Given identical voicings, when voiceLeadingDistance(a, a) is computed, then result equals 0 in tests/unit/theory.test.ts.
+- [ ] Given a source voicing and target chord, when optimizeVoicing() is applied, then new distance ≤ original distance in tests/unit/theory.test.ts.
+- [ ] Given G7 in C major, when getTritoneSubstitution('G') is called, then the returned root is 'Db' in tests/unit/theory.test.ts.
+- [ ] Given a generated C major progression, when smartSwap(prog, 1, 'harmony', 42) is called, then durationBeats unchanged and voiceLeadingDistance(original, swapped) ≤ 24 in tests/unit/generator.test.ts.
+- [ ] Given a generated A aeolian progression, when smartSwap(prog, 0, 'voicing', 7) is called, then root unchanged and quality differs in tests/unit/generator.test.ts.

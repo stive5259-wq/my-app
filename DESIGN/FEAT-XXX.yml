@@ -1,0 +1,52 @@
+<meta:
+  id: "FEAT-003"
+  title: "Unit tests for theory + Smart Swap"
+  created: "2025-10-22"
+rationale: "Reduce musical/theory risk by validating core primitives and Smart Swap behavior with deterministic, property-driven tests using Vitest."
+ui:
+  wireframe_ascii: |
+    +---------------------------+
+    | Terminal / Vitest Runner |
+    |---------------------------|
+    | PASS theory.test.ts      |
+    | PASS generator.test.ts   |
+    | All tests passed         |
+    +---------------------------+
+  components:
+    - id: "VitestRunner"
+      states: [empty, loading, error, data]
+      props: {}
+data:
+  entities:
+    - name: "TestCase"
+      fields: { id: string }
+logic:
+  state_machine:
+    states: [idle, working, done, error]
+    transitions:
+      idle->working: "Run 'pnpm test'"
+      working->done: "All assertions pass"
+      working->error: "Any assertion fails or runtime error"
+dev:
+  files_to_touch:
+    - "tests/unit/theory.test.ts"
+    - "tests/unit/generator.test.ts"
+    - "src/core/theory.ts"       # export types/helpers used by tests (no logic changes)
+    - "src/core/generator.ts"    # ensure smartSwap and generateProgression are exported
+  scripts:
+    dev: "pnpm dev"
+    test: "pnpm test"
+acceptance_tests:
+  - "Given identical voicings, when voiceLeadingDistance(a, a) is computed, then result equals 0 in tests/unit/theory.test.ts."
+  - "Given a source voicing and target chord, when optimizeVoicing() is applied, then the new distance ≤ original distance in tests/unit/theory.test.ts."
+  - "Given G7 in C major, when getTritoneSubstitution('G') is called, then the returned root is 'Db' in tests/unit/theory.test.ts."
+  - "Given a generated C major progression, when smartSwap(prog, 1, 'harmony', 42) is called, then the swapped chord keeps durationBeats and voiceLeadingDistance(original, swapped) ≤ 24 in tests/unit/generator.test.ts."
+  - "Given a generated A aeolian progression, when smartSwap(prog, 0, 'voicing', 7) is called, then the swapped chord has the same root as original and a different quality in tests/unit/generator.test.ts."
+non_goals:
+  - "Adding new UI features or modifying Piano Roll."
+  - "Implementing MIDI export."
+  - "Changing Smart Swap algorithms (logic remains as-is)."
+risks:
+  - "APIs not exported → mitigation: add minimal exports from core modules without logic changes."
+  - "Randomness in smartSwap → mitigation: use existing seed parameter for deterministic assertions and property-based checks."
+>
