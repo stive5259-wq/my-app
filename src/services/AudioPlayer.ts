@@ -21,10 +21,25 @@ export class AudioPlayer {
 
     console.log('🎵 Starting playback...', progression);
 
-    this.audioContext = new AudioContext();
-    this.isPlaying = true;
-    this.stopCallback = onEnd;
-    this.currentChordCallback = onChordChange || null;
+    try {
+      this.audioContext = new AudioContext();
+
+      // Resume AudioContext if suspended (browser autoplay policy)
+      if (this.audioContext.state === 'suspended') {
+        console.log('⏸️ AudioContext suspended, resuming...');
+        await this.audioContext.resume();
+      }
+
+      console.log('✅ AudioContext state:', this.audioContext.state);
+      console.log('✅ AudioContext currentTime:', this.audioContext.currentTime);
+
+      this.isPlaying = true;
+      this.stopCallback = onEnd;
+      this.currentChordCallback = onChordChange || null;
+    } catch (err) {
+      console.error('❌ Failed to create AudioContext:', err);
+      throw err;
+    }
 
     const { chords, tempoBpm } = progression;
     const beatDuration = 60 / tempoBpm; // seconds per beat
@@ -52,6 +67,8 @@ export class AudioPlayer {
       // Schedule notes for this chord
       for (const midiNote of chord.notes) {
         const frequency = this.midiToFrequency(midiNote);
+        console.log(`  🎼 Note: MIDI ${midiNote} = ${frequency.toFixed(2)} Hz`);
+
         const oscillator = this.audioContext!.createOscillator();
         const gainNode = this.audioContext!.createGain();
 
@@ -60,7 +77,7 @@ export class AudioPlayer {
 
         // Envelope: quick fade-in, sustain, quick fade-out
         const rampTime = GAIN_RAMP_MS / 1000;
-        const noteVolume = 0.2 / chord.notes.length; // Slightly louder
+        const noteVolume = 0.3 / chord.notes.length; // Even louder for testing
 
         gainNode.gain.setValueAtTime(0, currentTime);
         gainNode.gain.linearRampToValueAtTime(noteVolume, currentTime + rampTime);
@@ -70,8 +87,13 @@ export class AudioPlayer {
         oscillator.connect(gainNode);
         gainNode.connect(this.audioContext!.destination);
 
-        oscillator.start(currentTime);
-        oscillator.stop(currentTime + duration);
+        try {
+          oscillator.start(currentTime);
+          oscillator.stop(currentTime + duration);
+          console.log(`    ▶️ Scheduled to play at ${currentTime.toFixed(2)}s for ${duration.toFixed(2)}s`);
+        } catch (err) {
+          console.error('    ❌ Failed to start oscillator:', err);
+        }
 
         this.scheduledNodes.push(oscillator);
       }

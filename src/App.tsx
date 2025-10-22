@@ -64,6 +64,41 @@ function App() {
     setCurrentPlayingChord(-1);
   };
 
+  const handleTestAudio = async () => {
+    console.log('🔊 Testing audio with simple tone...');
+    try {
+      const ctx = new AudioContext();
+      await ctx.resume();
+      console.log('AudioContext state:', ctx.state);
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.frequency.value = 440; // A4
+      osc.type = 'sine';
+
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.01);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + 0.5);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.55);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.55);
+
+      console.log('✅ Test tone scheduled!');
+
+      setTimeout(() => {
+        ctx.close();
+        console.log('✅ Test complete');
+      }, 600);
+    } catch (err) {
+      console.error('❌ Test audio failed:', err);
+    }
+  };
+
   const handleSwapChord = (index: number) => {
     if (!progression || state === 'playing') return;
 
@@ -171,6 +206,21 @@ function App() {
         onStop={handleStop}
         hasProgression={!!progression}
       />
+
+      {/* Audio Test Button */}
+      <div style={{ margin: '0.5rem 0' }}>
+        <button
+          onClick={handleTestAudio}
+          style={{
+            fontSize: '0.8rem',
+            padding: '0.4rem 0.8rem',
+            backgroundColor: '#2a2a2a',
+            borderColor: '#555',
+          }}
+        >
+          🔊 Test Audio (440 Hz beep)
+        </button>
+      </div>
 
       {/* Swap Mode Toggles */}
       {progression && (
