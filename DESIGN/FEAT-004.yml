@@ -1,0 +1,42 @@
+meta:
+  id: "FEAT-004"
+  title: "Grand Piano instrument option"
+  created: "2025-10-22"
+rationale: "Add sample-based piano with persistence and caching."
+ui:
+  wireframe_ascii: |
+    [Instrument Menu] -> Grand Piano
+  components:
+    - id: "InstrumentSelect"
+      states: [empty, loading, error, data]
+      props: {}
+data:
+  entities:
+    - name: "Instrument"
+      fields: { id: string, name: string }
+logic:
+  state_machine:
+    states: [idle, loading, ready, error]
+    transitions:
+      idle->loading: "Select Grand Piano"
+      loading->ready: "Samples loaded"
+      loading->error: "Load fails"
+dev:
+  files_to_touch:
+    - "src/audio/instruments.ts"
+    - "src/audio/sampler.ts"
+    - "src/components/InstrumentSelect.tsx"
+    - "src/hooks/useInstrument.ts"
+    - "tests/unit/instruments.test.ts"
+  scripts:
+    dev: "pnpm dev"
+    test: "pnpm test"
+acceptance_tests:
+  - "When opening Instrument menu, Grand Piano is listed."
+  - "After selecting Grand Piano, playing a chord uses instrumentId 'grand-piano'."
+  - "After reload, Grand Piano selection persists from localStorage."
+  - "On sample load failure, an error toast appears and fallback to Synth."
+non_goals:
+  - "New UI beyond selection"
+risks:
+  - "Large samples; mitigate with caching"
