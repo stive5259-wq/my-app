@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/controls.tsx","./src/components/pianoroll.tsx","./src/components/progressiondisplay.tsx","./src/core/generator.ts","./src/core/theory.ts","./src/services/audioplayer.ts"],"version":"5.9.3"}
