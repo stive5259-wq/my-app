@@ -1,6 +1,6 @@
 # BRIEF
-Goal: <1 sentence outcome in 7 days>
-Users: <who + job-to-be-done>
-Constraints: <stack, time/budget, offline/online>
-Non-goals: <not building>
-Demo Day: <3-minute demo description>
+Goal: <Chord generator application that will generate beautiful chord progressions where user can swap selected chords until he is happy and export to midi.>
+Users: <Electronic dance music/house music producers that wants midi files to put in their daws to start a new track. Can also import their started on midi progressions and improve them with the application.>
+Constraints: <Offline, should be able be to convert into a vst later. Should use advanced music theory and always generate beautiful progressions.>
+Non-goals: <Not building "scaler" or something where user has a lot of options and can decide what chords he wants. Swapping should just immediately swap to a good new chord or edited version of the same chord based on randomization seeding that fits within music theory. User can toggle on or off settings when swapping, like keep the voicing but change harmony, change voicing keep harmony tonality and so on. >
+Demo Day: <Generate progression, swap chords. Every time it swaps it still sounds good or better. Piano roll that shows the generated chords and updates when swaps. Player with pause, stop, play. Space should play pause or stop in the best possible way for "jamming". >
