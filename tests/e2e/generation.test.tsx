@@ -33,7 +33,11 @@ class MockAudioContext {
   }
 }
 
-global.AudioContext = MockAudioContext as any;
+declare global {
+  var AudioContext: typeof MockAudioContext;
+}
+
+globalThis.AudioContext = MockAudioContext;
 
 describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
   beforeEach(() => {
