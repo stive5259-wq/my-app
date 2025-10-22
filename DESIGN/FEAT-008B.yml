@@ -1,0 +1,34 @@
+meta:
+  id: "FEAT-008B"
+  title: "Audio scheduler for grouping (ties)"
+  created: "2025-10-22"
+rationale: "Make grouped chords actually sound connected by sustaining optimal notes across boundaries without duplicate note-ons."
+ui:
+  components:
+    - id: "App"
+      states: [idle, generating, ready, playing, error]
+      props: {}
+data: {}
+logic:
+  tie_selection:
+    group_next: "Sustain up to 2 pitch classes common to chord i and i+1; if none, use nearest semitone matches (≤1)."
+    group_all: "Sustain up to 2 pitch classes common to all chords; if none, choose most frequent pitch classes across the progression."
+  scheduling:
+    - "Build deterministic NoteEvents {midi,startBeats,durationBeats}."
+    - "Suppress duplicate note-ons when a pitch class is sustained."
+  integration:
+    - "AudioPlayer.playWithEvents(events, progression, …) schedules oscillators based on beats and tempo."
+    - "App.handlePlay uses events path when grouping is active; otherwise falls back to existing play()."
+dev:
+  files_to_touch:
+    - "src/services/grouping.ts"
+    - "src/services/AudioPlayer.ts"
+    - "src/App.tsx"
+    - "tests/unit/grouping.test.ts"
+acceptance_tests:
+  - "Group→Next: one sustained event spans two chords; no duplicate note-on at chord 2."
+  - "Group All: sustained event spans the full progression without re-triggering its pitch class."
+non_goals:
+  - "UI changes (covered by FEAT-008A)"
+risks:
+  - "Oscillator lifecycle drift; mitigated with envelope and stop() cleanup"

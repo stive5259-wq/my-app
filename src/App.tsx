@@ -3,6 +3,7 @@ import { generateProgression, smartSwap, getChordDisplayName, type Progression, 
 import type { NoteName, Mode } from './core/theory';
 import { AudioPlayer } from './services/AudioPlayer';
 import { blobFromProgression, triggerDownload } from './services/MidiExporter';
+import { computeNoteEvents } from './services/grouping';
 import { Controls } from './components/Controls';
 import ProgressionDisplay from './components/ProgressionDisplay';
 import { PianoRoll } from './components/PianoRoll';
@@ -60,27 +61,45 @@ function App() {
   const handlePlay = useCallback(async () => {
     if (!progression || state !== 'ready') return;
 
+    const groupingActive = groupAll || groupNext.some(Boolean);
+
     setState('playing');
     setCurrentPlayingChord(0);
+
+    const handleEnd = () => {
+      setState('ready');
+      setCurrentPlayingChord(-1);
+    };
+
+    const handleChordChange = (chordIndex: number) => {
+      setCurrentPlayingChord(chordIndex);
+    };
+
     try {
-      await audioPlayerRef.current.play(
-        progression,
-        instrumentId,
-        () => {
-          setState('ready');
-          setCurrentPlayingChord(-1);
-        },
-        (chordIndex) => {
-          setCurrentPlayingChord(chordIndex);
-        }
-      );
+      if (groupingActive && audioPlayerRef.current.playWithEvents) {
+        const events = computeNoteEvents(progression, groupNext, groupAll);
+        await audioPlayerRef.current.playWithEvents(
+          events,
+          progression,
+          instrumentId,
+          handleEnd,
+          handleChordChange
+        );
+      } else {
+        await audioPlayerRef.current.play(
+          progression,
+          instrumentId,
+          handleEnd,
+          handleChordChange
+        );
+      }
     } catch (err) {
       console.error('Playback failed', err);
       setError(err instanceof Error ? err.message : 'Playback failed');
       setState('error');
       setCurrentPlayingChord(-1);
     }
-  }, [instrumentId, progression, state]);
+  }, [groupAll, groupNext, instrumentId, progression, state]);
 
   const handleStop = useCallback(() => {
     if (state !== 'playing') return;
