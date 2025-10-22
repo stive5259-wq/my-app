@@ -5,3 +5,4 @@ Changelog
 2025-10-22 refactor(FEAT-005): enable drag reorder, copy/paste, and add-after for chords
 2025-10-22 refactor(FEAT-006): default startup key/mode to C minor with e2e verification
 2025-10-22 refactor(FEAT-007): add Export MIDI button and minimal MIDI writer with tests
+2025-10-22 refactor(FEAT-008A): UI-only grouping (Group→Next, Group All, TIED badges) with reset on reorder
