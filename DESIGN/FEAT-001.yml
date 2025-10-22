@@ -1,0 +1,39 @@
+meta:
+  id: "FEAT-001"
+  title: "<short name>"
+  created: "2025-10-22"
+rationale: "<why this matters now>"
+ui:
+  wireframe_ascii: |
+    [Header] [Action]
+    [Main: empty|loading|error|data]
+  components:
+    - id: "MainPanel"
+      states: [empty, loading, error, data]
+      props: {}
+data:
+  entities:
+    - name: "Item"
+      fields: { id: string, name: string }
+logic:
+  state_machine:
+    states: [idle, working, done, error]
+    transitions:
+      idle->working: "Click Run"
+      working->done: "Success"
+      working->error: "Fail"
+dev:
+  files_to_touch:
+    - "src/index.tsx"
+    - "src/components/MainPanel.tsx"
+    - "tests/smoke.test.ts"
+  scripts:
+    dev: "pnpm dev"
+    test: "vitest run"
+acceptance_tests:
+  - "Given fresh start, when user clicks 'Run', then button disables and spinner shows."
+  - "On success, list of Items renders with count."
+non_goals:
+  - "No auth, no persistence"
+risks:
+  - "API latency → show loading state with min 200ms"
