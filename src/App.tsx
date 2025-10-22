@@ -21,6 +21,8 @@ function App() {
   const [progression, setProgression] = useState<Progression | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [clipboardChord, setClipboardChord] = useState<Chord | null>(null);
+  const [groupAll, setGroupAll] = useState(false);
+  const [groupNext, setGroupNext] = useState<boolean[]>([]);
   const [swapCount, setSwapCount] = useState(0);
   const [swapMode, setSwapMode] = useState<SwapMode>('harmony');
   const [selectedKey, setSelectedKey] = useState<NoteName>(DEFAULT_KEY);
@@ -45,6 +47,8 @@ function App() {
       try {
         const prog = generateProgression(selectedKey, selectedMode);
         setProgression(prog);
+        setGroupAll(false);
+        setGroupNext(new Array(Math.max(0, prog.chords.length - 1)).fill(false));
         setState('ready');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Generation failed');
@@ -142,6 +146,8 @@ function App() {
       const next = [...prev.chords];
       const [moved] = next.splice(fromIndex, 1);
       next.splice(toIndex, 0, moved);
+      setGroupAll(false);
+      setGroupNext([]);
       return { ...prev, chords: next };
     });
   };
@@ -170,7 +176,20 @@ function App() {
       if (!prev) return prev;
       const next = [...prev.chords];
       next.splice(index + 1, 0, clone);
+      setGroupNext((arr) => arr.slice(0, index + 1).concat(false, arr.slice(index + 1)));
       return { ...prev, chords: next };
+    });
+  };
+
+  const toggleGroupAll = () => {
+    setGroupAll((value) => !value);
+  };
+
+  const toggleGroupNext = (i: number) => {
+    setGroupNext((arr) => {
+      const next = arr.slice();
+      next[i] = !next[i];
+      return next;
     });
   };
 
@@ -352,8 +371,19 @@ function App() {
             onPaste={state === 'ready' ? handlePaste : undefined}
             canPaste={!!clipboardChord}
             onAddAfter={state === 'ready' ? handleAddAfter : undefined}
+            groupAll={groupAll}
+            groupNext={groupNext}
+            onToggleGroupNext={state === 'ready' ? toggleGroupNext : undefined}
           />
-          <div style={{ marginTop: '0.75rem' }}>
+          <div style={{ marginTop: '0.75rem', display: 'flex', gap: 8 }}>
+            <button
+              type="button"
+              data-testid="group-all-toggle"
+              disabled={state === 'generating' || state === 'playing'}
+              onClick={toggleGroupAll}
+            >
+              {groupAll ? 'Group All: On' : 'Group All: Off'}
+            </button>
             <button
               type="button"
               data-testid="export-midi"

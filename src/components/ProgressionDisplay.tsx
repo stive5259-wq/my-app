@@ -13,6 +13,9 @@ type Props = {
   onPaste?: (index: number) => void;
   canPaste?: boolean;
   onAddAfter?: (index: number) => void;
+  groupNext?: boolean[];
+  groupAll?: boolean;
+  onToggleGroupNext?: (index: number) => void;
 };
 
 function clampIndex(i: number, len: number) {
@@ -30,6 +33,9 @@ export default function ProgressionDisplay(props: Props) {
     onPaste,
     canPaste = false,
     onAddAfter,
+    groupNext = [],
+    groupAll = false,
+    onToggleGroupNext,
   } = props;
 
   const handleDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
@@ -66,6 +72,7 @@ export default function ProgressionDisplay(props: Props) {
       {chords.map((ch, idx) => {
         const isPlaying = playingIndex === idx;
         const label = ch.displayName ?? `${ch.root}${ch.quality ?? ''}`;
+        const tiedHere = groupAll || groupNext[idx] || groupNext[idx - 1];
         return (
           <div
             key={idx}
@@ -94,6 +101,7 @@ export default function ProgressionDisplay(props: Props) {
               <span data-testid={`chord-label-${idx}`}>
                 {label}
               </span>
+              {tiedHere && <small data-testid={`tied-${idx}`}>TIED</small>}
               {isPlaying && <small>NOW PLAYING</small>}
               {!isPlaying && <small>click to swap</small>}
             </div>
@@ -130,6 +138,17 @@ export default function ProgressionDisplay(props: Props) {
                 }}
               >
                 +
+              </button>
+              <button
+                type="button"
+                data-testid={`group-next-${idx}`}
+                disabled={disabled || idx === chords.length - 1}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleGroupNext?.(idx);
+                }}
+              >
+                Group→Next
               </button>
             </div>
           </div>

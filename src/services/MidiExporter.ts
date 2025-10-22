@@ -109,7 +109,9 @@ export function progressionToMIDI(progression: Progression | null): Uint8Array {
 
 export function blobFromProgression(progression: Progression | null): Blob {
   const data = progressionToMIDI(progression);
-  return new Blob([data], { type: 'audio/midi' });
+  const copy = new Uint8Array(data.length);
+  copy.set(data);
+  return new Blob([copy], { type: 'audio/midi' });
 }
 
 export function triggerDownload(blob: Blob, filename = 'progression.mid'): void {

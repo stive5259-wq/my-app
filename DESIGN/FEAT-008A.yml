@@ -1,0 +1,36 @@
+meta:
+  id: "FEAT-008A"
+  title: "UI grouping (Group→Next, Group All, TIED badges)"
+  created: "2025-10-22"
+rationale: "Introduce grouping controls and visible state without touching audio; prepares for later tie scheduling."
+ui:
+  components:
+    - id: "ProgressionDisplay"
+      states: [empty, loading, error, data]
+      props:
+        - "groupNext: boolean[]"
+        - "groupAll: boolean"
+        - "onToggleGroupNext(index:number)"
+    - id: "App"
+      states: [idle, generating, ready, playing, error]
+      props: {}
+data: {}
+logic:
+  interactions:
+    - "Group→Next on chord i sets groupNext[i]=true and shows TIED on chord i and i+1."
+    - "Group All shows TIED on all chords."
+    - "Reorder clears groupNext[] to avoid mismatched ties."
+dev:
+  files_to_touch:
+    - "src/components/ProgressionDisplay.tsx"
+    - "src/App.tsx"
+    - "tests/e2e/grouping-ui.test.tsx"
+    - "src/services/grouping.ts"
+acceptance_tests:
+  - "UI-only: toggling Group→Next shows TIED on source and target chord."
+  - "UI-only: toggling Group All shows TIED on all chords."
+  - "UI-only: after a reorder, TIED badges clear unless toggled again."
+non_goals:
+  - "Audio tie scheduling or playback changes (deferred to FEAT-008B)"
+risks:
+  - "Drag-and-drop testing needs DataTransfer polyfill in jsdom"
