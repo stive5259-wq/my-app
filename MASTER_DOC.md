@@ -15,6 +15,7 @@ Demo path: `pnpm dev` → open local Vite preview.
 - FEAT-007: Export MIDI button — status: done
 - FEAT-008A: UI grouping (Group→Next, Group All, TIED badges) — status: done
 - FEAT-008B: Audio scheduler for grouping (ties) — status: done
+- FEAT-009: Octave ± per chord, Seeded Randomize Voicing, and Loop Range — status: done
 
 3. UX Map
 Screens:
@@ -30,8 +31,14 @@ Key modules:
 - tests/unit/theory.test.ts: Deterministic coverage for theory primitives
 - tests/unit/generator.test.ts: Deterministic Smart Swap assertions
 - tests/unit/grouping.test.ts: Tie planning + note-event scheduler assertions
+- tests/unit/voicing.random.test.ts: Seeded voicing randomization bounds/span checks
+- tests/unit/octaveOffset.test.ts: Octave offset clamp assertions
 - tests/e2e/grouping-ui.test.tsx: UI acceptance for grouping toggles/badges
+- tests/e2e/loop-ui.test.tsx: Loop range toggle/inputs
 - src/services/grouping.ts: Tie planning and note-event scheduling for grouping
+- src/services/rng.ts: Deterministic RNG helper for voicing
+- src/services/voicingUtils.ts: Octave offset + seeded voicing helpers
+- src/components/LoopControls.tsx: Loop enable/range UI
 - src/services/MidiExporter.ts: Minimal MIDI writer and download helper
 - src/audio/instruments.ts: Instrument registry, synth/piano scheduling, caching
 - src/audio/sampler.ts: Grand Piano sample loading and playback wrappers
@@ -77,3 +84,9 @@ UI grouping (no audio changes):
 Audio scheduler for grouping:
 ✅ Group→Next scheduling: Unit tests confirm a common tone sustains across chord boundaries with a single extended event and no duplicate note-on (tests/unit/grouping.test.ts).
 ✅ Group All scheduling: Unit tests confirm at least one pitch class sustains from start to end with no re-trigger (tests/unit/grouping.test.ts).
+
+14. Acceptance Status — FEAT-009
+Octave / Seeded Voicing / Loop:
+✅ Octave: Given a chord, when **Octave ▲** is clicked twice, its realized notes shift by +24 semitones within bounds (tests/unit/octaveOffset.test.ts).
+✅ Randomize Voicing: With Randomize ON and seed `1234`, rendering twice yields identical voicings; after **Reseed**, voicings change while staying within bounds/span (tests/unit/voicing.random.test.ts).
+✅ Loop: With Loop ON and range **From=1, To=3**, the UI reflects the range and playback routes a sliced sub-progression repeatedly (tests/e2e/loop-ui.test.tsx).
