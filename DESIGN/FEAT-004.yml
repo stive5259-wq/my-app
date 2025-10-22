@@ -25,9 +25,13 @@ dev:
   files_to_touch:
     - "src/audio/instruments.ts"
     - "src/audio/sampler.ts"
+    - "src/audio/types.ts"
+    - "src/audio/util.ts"
     - "src/components/InstrumentSelect.tsx"
     - "src/hooks/useInstrument.ts"
+    - "src/state/audioState.ts"
     - "tests/unit/instruments.test.ts"
+    - "tests/e2e/instrument.spec.tsx"
   scripts:
     dev: "pnpm dev"
     test: "pnpm test"

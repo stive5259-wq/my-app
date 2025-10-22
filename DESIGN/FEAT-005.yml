@@ -1,0 +1,41 @@
+meta:
+  id: "FEAT-005"
+  title: "Chord arrange (drag, copy/paste, add)"
+  created: "2025-10-22"
+rationale: "Allow users to quickly change timing by reordering chords, duplicate ideas via copy/paste, and extend progressions by adding chords."
+ui:
+  components:
+    - id: "ProgressionDisplay"
+      states: [empty, loading, error, data]
+      props:
+        - "onReorder(fromIndex:number,toIndex:number)"
+        - "onCopy(index:number)"
+        - "onPaste(index:number)"
+        - "canPaste:boolean"
+        - "onAddAfter(index:number)"
+data:
+  entities: []
+logic:
+  state_machine:
+    states: [idle, generating, ready, playing, error]
+    transitions:
+      ready->ready: "Drag to reorder (updates progression.chords order)"
+      ready->ready: "Copy/Paste (replaces target chord)"
+      ready->ready: "Add After (inserts duplicate chord at index+1)"
+dev:
+  files_to_touch:
+    - "src/components/ProgressionDisplay.tsx"
+    - "src/App.tsx"
+    - "tests/e2e/arrange.test.tsx"
+  scripts:
+    dev: "pnpm dev"
+    test: "pnpm test"
+acceptance_tests:
+  - "Drag reorder changes visible order and playback order."
+  - "Copy/Paste duplicates source chord onto target."
+  - "Add After increases chord count by one."
+non_goals:
+  - "Variable durations or tempo changes"
+  - "Undo/redo"
+risks:
+  - "HTML5 DnD in jsdom requires DataTransfer polyfill in tests"

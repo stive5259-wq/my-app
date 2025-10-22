@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { generateProgression, smartSwap, getChordDisplayName, type Progression, type SwapMode } from './core/generator';
+import { generateProgression, smartSwap, getChordDisplayName, type Progression, type SwapMode, type Chord } from './core/generator';
 import type { NoteName, Mode } from './core/theory';
 import { AudioPlayer } from './services/AudioPlayer';
 import { Controls } from './components/Controls';
-import { ProgressionDisplay } from './components/ProgressionDisplay';
+import ProgressionDisplay from './components/ProgressionDisplay';
 import { PianoRoll } from './components/PianoRoll';
 import { useInstrument } from './hooks/useInstrument';
 import { InstrumentSelect } from './components/InstrumentSelect';
@@ -17,6 +17,7 @@ function App() {
   const [state, setState] = useState<AppState>('idle');
   const [progression, setProgression] = useState<Progression | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [clipboardChord, setClipboardChord] = useState<Chord | null>(null);
   const [swapCount, setSwapCount] = useState(0);
   const [swapMode, setSwapMode] = useState<SwapMode>('harmony');
   const [selectedKey, setSelectedKey] = useState<NoteName>('C');
@@ -130,6 +131,44 @@ function App() {
       chords: newChords,
     });
     setSwapCount(swapCount + 1);
+  };
+
+  const handleReorder = (fromIndex: number, toIndex: number) => {
+    setProgression((prev) => {
+      if (!prev) return prev;
+      const next = [...prev.chords];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return { ...prev, chords: next };
+    });
+  };
+
+  const handleCopy = (index: number) => {
+    if (!progression) return;
+    const chord = progression.chords[index];
+    setClipboardChord(JSON.parse(JSON.stringify(chord)));
+  };
+
+  const handlePaste = (index: number) => {
+    if (!progression || !clipboardChord) return;
+    const cloned = JSON.parse(JSON.stringify(clipboardChord)) as Chord;
+    setProgression((prev) => {
+      if (!prev) return prev;
+      const next = prev.chords.map((ch, idx) => (idx === index ? cloned : ch));
+      return { ...prev, chords: next };
+    });
+  };
+
+  const handleAddAfter = (index: number) => {
+    if (!progression) return;
+    const source = progression.chords[index];
+    const clone = JSON.parse(JSON.stringify(source)) as Chord;
+    setProgression((prev) => {
+      if (!prev) return prev;
+      const next = [...prev.chords];
+      next.splice(index + 1, 0, clone);
+      return { ...prev, chords: next };
+    });
   };
 
   const handleSpaceKey = useCallback((event: KeyboardEvent) => {
@@ -292,12 +331,25 @@ function App() {
         </div>
       )}
 
-      <ProgressionDisplay
-        progression={progression}
-        onSwapChord={state === 'ready' ? handleSwapChord : undefined}
-        getDisplayName={getChordDisplayName}
-        currentPlayingChord={state === 'playing' ? currentPlayingChord : -1}
-      />
+      {progression && (
+        <div style={{ color: '#bbb', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+          {progression.key} {progression.mode.charAt(0).toUpperCase() + progression.mode.slice(1)} progression
+        </div>
+      )}
+
+      {progression && (
+        <ProgressionDisplay
+          chords={progression.chords.map((ch) => ({ ...ch, displayName: getChordDisplayName(ch) }))}
+          playingIndex={state === 'playing' ? currentPlayingChord : null}
+          disabled={state === 'generating' || state === 'playing'}
+          onSwap={state === 'ready' ? handleSwapChord : undefined}
+          onReorder={state === 'ready' ? handleReorder : undefined}
+          onCopy={state === 'ready' ? handleCopy : undefined}
+          onPaste={state === 'ready' ? handlePaste : undefined}
+          canPaste={!!clipboardChord}
+          onAddAfter={state === 'ready' ? handleAddAfter : undefined}
+        />
+      )}
       <PianoRoll progression={progression} />
     </div>
   );
