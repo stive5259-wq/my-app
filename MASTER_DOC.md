@@ -14,6 +14,7 @@ Demo path: `pnpm dev` → open local Vite preview.
 - FEAT-006: Default startup key/mode = C minor — status: done
 - FEAT-007: Export MIDI button — status: done
 - FEAT-008A: UI grouping (Group→Next, Group All, TIED badges) — status: done
+- FEAT-008B: Audio scheduler for grouping (ties) — status: done
 
 3. UX Map
 Screens:
@@ -28,7 +29,9 @@ Key modules:
 - src/core/generator.ts: Progression factory and Smart Swap engine
 - tests/unit/theory.test.ts: Deterministic coverage for theory primitives
 - tests/unit/generator.test.ts: Deterministic Smart Swap assertions
-- tests/e2e/grouping-ui.test.tsx: UI-only acceptance for grouping toggles/badges
+- tests/unit/grouping.test.ts: Tie planning + note-event scheduler assertions
+- tests/e2e/grouping-ui.test.tsx: UI acceptance for grouping toggles/badges
+- src/services/grouping.ts: Tie planning and note-event scheduling for grouping
 - src/services/MidiExporter.ts: Minimal MIDI writer and download helper
 - src/audio/instruments.ts: Instrument registry, synth/piano scheduling, caching
 - src/audio/sampler.ts: Grand Piano sample loading and playback wrappers
@@ -70,4 +73,7 @@ UI grouping (no audio changes):
 ✅ Given data state, when **Group All** is toggled on, then all chord tiles show **TIED** (tests/e2e/grouping-ui.test.tsx).
 ✅ Given a **reorder** operation, `groupNext[]` resets and TIED badges clear unless toggled again (tests/e2e/grouping-ui.test.tsx).
 
-Planned: FEAT-008B — Audio scheduler & tie integration (note-event computation, no duplicate note-ons).
+13. Acceptance Status — FEAT-008B
+Audio scheduler for grouping:
+✅ Group→Next scheduling: Unit tests confirm a common tone sustains across chord boundaries with a single extended event and no duplicate note-on (tests/unit/grouping.test.ts).
+✅ Group All scheduling: Unit tests confirm at least one pitch class sustains from start to end with no re-trigger (tests/unit/grouping.test.ts).
