@@ -11,6 +11,7 @@ Demo path: `pnpm dev` → open local Vite preview.
 - FEAT-003: Deterministic theory + Smart Swap unit tests — status: done
 - FEAT-004: Grand Piano instrument selection with cached samples — status: done
 - FEAT-005: Chord arrange (drag, copy/paste, add) — status: done
+- FEAT-006: Default startup key/mode = C minor — status: done
 
 3. UX Map
 Screens:
@@ -50,3 +51,7 @@ Entities:
 - Drag reorder: ✅ Reorders chords visually; playback follows new order in tests/e2e/arrange.test.tsx
 - Copy/Paste: ✅ Copy + paste duplicates a chord label onto target
 - Add After: ✅ Inserts cloned chord and increments chord count by one
+
+10. Acceptance Status — FEAT-006
+Default startup key/mode:
+✅ Given the app just loaded, when the user clicks Generate without changing selectors, the rendered progression includes “C minor” (case-insensitive) as the key/mode (tests/e2e/default-key.test.tsx).
