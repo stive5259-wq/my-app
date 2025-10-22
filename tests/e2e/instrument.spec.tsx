@@ -71,7 +71,7 @@ describe('Instrument selection', () => {
     await waitFor(() => expect(screen.queryByTestId('instrument-loading')).toBeNull());
 
     await user.click(screen.getByRole('button', { name: /generate/i }));
-    await waitFor(() => screen.getByText(/C Major/));
+    await waitFor(() => screen.getByText(/C Minor/i));
 
     await user.click(screen.getByRole('button', { name: /play/i }));
     await waitFor(() => expect(playSpy).toHaveBeenCalled());

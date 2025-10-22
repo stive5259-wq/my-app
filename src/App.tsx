@@ -12,6 +12,8 @@ type AppState = 'idle' | 'generating' | 'ready' | 'playing' | 'error';
 
 const KEYS: NoteName[] = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 const MODES: Mode[] = ['major', 'minor', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian'];
+const DEFAULT_KEY: NoteName = 'C';
+const DEFAULT_MODE: Mode = 'minor';
 
 function App() {
   const [state, setState] = useState<AppState>('idle');
@@ -20,8 +22,8 @@ function App() {
   const [clipboardChord, setClipboardChord] = useState<Chord | null>(null);
   const [swapCount, setSwapCount] = useState(0);
   const [swapMode, setSwapMode] = useState<SwapMode>('harmony');
-  const [selectedKey, setSelectedKey] = useState<NoteName>('C');
-  const [selectedMode, setSelectedMode] = useState<Mode>('major');
+  const [selectedKey, setSelectedKey] = useState<NoteName>(DEFAULT_KEY);
+  const [selectedMode, setSelectedMode] = useState<Mode>(DEFAULT_MODE);
   const [currentPlayingChord, setCurrentPlayingChord] = useState<number>(-1);
   const audioPlayerRef = useRef<AudioPlayer>(new AudioPlayer());
   const {

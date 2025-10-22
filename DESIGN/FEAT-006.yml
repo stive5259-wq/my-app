@@ -1,0 +1,30 @@
+meta:
+  id: "FEAT-006"
+  title: "Default startup key/mode = C minor"
+  created: "2025-10-22"
+rationale: "Improve first-run UX by starting in a musically common key with a minor mode default, reducing clicks to first sound."
+ui:
+  components:
+    - id: "App"
+      states: [idle, generating, ready, playing, error]
+data: {}
+logic:
+  state_machine:
+    states: [idle, generating, ready, playing, error]
+    transitions:
+      idle->generating: "User clicks Generate with defaults (C/minor)"
+      generating->ready: "Progression generated in C minor"
+dev:
+  files_to_touch:
+    - "src/App.tsx"
+    - "tests/e2e/default-key.test.tsx"
+  scripts:
+    dev: "pnpm dev"
+    test: "pnpm test"
+acceptance_tests:
+  - "Given a fresh load, when Generate is clicked, the UI shows 'C minor' for key/mode."
+non_goals:
+  - "Changing available keys/modes"
+  - "Persisting user selection across reloads"
+risks:
+  - "If other features assume different defaults, ensure tests reference explicit values"

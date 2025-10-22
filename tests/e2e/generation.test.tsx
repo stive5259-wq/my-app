@@ -53,7 +53,7 @@ describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
     vi.clearAllMocks();
   });
 
-  it('Given fresh start, when user clicks Generate, then C Major progression renders with 7th chords', async () => {
+  it('Given fresh start, when user clicks Generate, then C minor progression renders with 7th chords', async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -82,7 +82,7 @@ describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
     await user.click(generateButton);
 
     await waitFor(() => {
-      screen.getByText(/C Major/);
+      screen.getByText(/C Minor/i);
     });
 
     // Click Play
@@ -106,7 +106,7 @@ describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
     await user.click(generateButton);
 
     await waitFor(() => {
-      screen.getByText(/C Major/);
+      screen.getByText(/C Minor/i);
     });
 
     const playButton = screen.getByRole('button', { name: /play/i });
@@ -139,7 +139,7 @@ describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
     await user.click(generateButton);
 
     await waitFor(() => {
-      screen.getByText(/C Major/);
+      screen.getByText(/C Minor/i);
     });
 
     // Press Space to play
@@ -195,7 +195,7 @@ describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
     await user.click(generateButton);
 
     await waitFor(() => {
-      screen.getByText(/C Major/);
+      screen.getByText(/C Minor/i);
     });
 
     // Play
