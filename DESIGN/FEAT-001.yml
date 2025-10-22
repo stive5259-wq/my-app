@@ -1,39 +1,67 @@
 meta:
-  id: "FEAT-001"
-  title: "<short name>"
-  created: "2025-10-22"
-rationale: "<why this matters now>"
-ui:
-  wireframe_ascii: |
-    [Header] [Action]
-    [Main: empty|loading|error|data]
-  components:
-    - id: "MainPanel"
-      states: [empty, loading, error, data]
-      props: {}
-data:
-  entities:
-    - name: "Item"
-      fields: { id: string, name: string }
-logic:
-  state_machine:
-    states: [idle, working, done, error]
-    transitions:
-      idle->working: "Click Run"
-      working->done: "Success"
-      working->error: "Fail"
+transitions:
+- from: idle
+to: generating
+on: click_generate
+action: generator.load_stub
+- from: generating
+to: ready
+on: generator_success
+action: set_progression
+- from: generating
+to: error
+on: generator_fail
+action: set_error
+- from: ready
+to: playing
+on: click_play | space_key
+guard: has_progression
+action: audio.play_progression
+- from: playing
+to: ready
+on: click_stop | space_key | playback_end
+action: audio.stop
+
+playback_rules:
+tempo_bpm: use progression.tempo_bpm (default 120)
+gain_ramp_ms: 8 # avoid clicks
+note_shape: sustain for full chord beats
+voice_count: up to 6 (simple oscillators)
+
+
+# Dev Plan
+
 dev:
-  files_to_touch:
-    - "src/index.tsx"
-    - "src/components/MainPanel.tsx"
-    - "tests/smoke.test.ts"
-  scripts:
-    dev: "pnpm dev"
-    test: "vitest run"
+language: TypeScript
+framework: React (Vite) — client only
+files_to_touch:
+- src/App.tsx
+- src/components/Controls.tsx
+- src/components/ProgressionDisplay.tsx
+- src/core/generator.ts
+- src/services/AudioPlayer.ts
+- tests/e2e/generation.test.ts
+coding_standards:
+- tsconfig: strict true
+- no external audio libs (WebAudio only in this feature)
+- pure functions in core; side-effects isolated in services
+
+scripts:
+dev: "pnpm dev"
+test: "vitest run"
+
 acceptance_tests:
-  - "Given fresh start, when user clicks 'Run', then button disables and spinner shows."
-  - "On success, list of Items renders with count."
+- "Given fresh start, when user clicks 'Generate', then 'Cmaj', 'Gmaj', 'Am', 'Fmaj' render in order."
+- "Given progression is visible, when user clicks 'Play', then playback starts, state = playing, and Play label switches to 'Stop'."
+- "Given playing, when user clicks 'Stop', then playback halts within 50ms and state = ready."
+- "Given ready with progression, when user presses Space (and focus is not in an input), playback toggles same as clicking Play/Stop."
+- "Generate is disabled while generating; Play is disabled while generating."
+- "No console errors during Generate → Play → Stop loop."
+
 non_goals:
-  - "No auth, no persistence"
+- advanced theory, swapping, Piano Roll, MIDI IO, offline/PWA
+
 risks:
-  - "API latency → show loading state with min 200ms"
+- WebAudio lifecycle quirks (user gesture requirement); mitigated by button/Space triggering
+- Data model drift; mitigated by minimal fields and unit tests
+- Keyboard event conflicts; mitigated by guarding against focused inputs
