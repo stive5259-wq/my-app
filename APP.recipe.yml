@@ -1,0 +1,43 @@
+app:
+  name: Kettamizer
+  goal: Fast offline chord generator with smart swaps and live audio
+  run:
+    web: pnpm dev
+    test: pnpm test
+    build: pnpm build
+
+design_system:
+  audio_engine: Tone.js
+  ui_kit: Tailwind
+  states: [empty, loading, error, data]
+
+quality_gates:
+  - unit_tests
+  - e2e_smoke
+  - typecheck
+  - lint_warnings_allowed: 3
+
+features:
+  - id: FEAT-003
+    title: Unit tests for theory and Smart Swap
+    status: planned
+    acceptance:
+      - Given identical voicings, when voiceLeadingDistance(a,a), then result equals 0
+      - Given G7, when getTritoneSubstitution('G'), then root equals Db
+  - id: FEAT-004
+    title: Grand Piano instrument option
+    status: planned
+    acceptance:
+      - When selecting instrument, Grand Piano appears and can be chosen
+      - When reloading, Grand Piano persists from localStorage
+      - On sample load failure, show toast and fall back to Synth
+
+blocks:
+  - name: InstrumentSelect
+    files:
+      - src/components/InstrumentSelect.tsx
+      - src/state/audioState.ts
+  - name: Sampler
+    files:
+      - src/audio/sampler.ts
+      - public/samples/grand-piano/*

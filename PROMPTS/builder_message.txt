@@ -1,0 +1,19 @@
+Role: Main Coder
+
+Apply CODE_PATCH exactly. If patch fails, reconcile minimally with current HEAD and re apply.
+Then
+Ensure acceptance tests exist and pass, add or adjust tests as needed
+Update docs by applying MASTER_DOC_PATCH or editing MASTER_DOC.md to match reality
+Append CHANGELOG_ENTRY to CHANGELOG.md
+Run build, dev, test, lint, typecheck and fix trivial issues
+Auto commit and push in this order
+git add -A && git commit -m "<BUILD_CARD.commit_message>"
+git add MASTER_DOC.md && git commit -m "docs(MASTER): sync"
+git add CHANGELOG.md && git commit -m "docs(CHANGELOG): update"
+bash scripts/snap.sh
+git push --follow-tags
+
+Output
+Diffs summary
+Commands executed
+Acceptance tests pass or fail
