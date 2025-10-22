@@ -1,0 +1,52 @@
+meta:
+  id: "FEAT-009"
+  title: "Octave ±, Seeded Voicing, Loop Range"
+  created: "2025-10-22"
+rationale: "Speed auditioning, enable reproducible richer voicings, and focus playback on a segment without altering defaults."
+ui:
+  components:
+    - id: "ProgressionDisplay"
+      states: [empty, loading, error, data]
+      props:
+        - "onOctaveNudge(index:number, delta:1|-1)"
+    - id: "LoopControls"
+      states: [disabled, enabled, invalidRange]
+      props:
+        - "enabled:boolean"
+        - "from:number"
+        - "to:number"
+        - "onToggle():void"
+        - "onSetFrom(n:number):void"
+        - "onSetTo(n:number):void"
+    - id: "App"
+      states: [idle, generating, ready, playing, error]
+      props: {}
+data: {}
+logic:
+  constraints:
+    - "MIDI bounds: 36..96; max chord span 24 semitones"
+  rng:
+    - "makeRng(seed) -> fn(): number in [0,1)"
+  voicing:
+    - "applyOctaveOffset(notes, offset)"
+    - "randomizeVoicing(notes, rng) within bounds/span"
+  loop:
+    - "If loop.enabled, slice chords [from..to] and re-trigger on end"
+acceptance_tests:
+  - "Octave ▲ twice => +24 semitones within bounds"
+  - "Seeded randomization reproducible; reseed changes"
+  - "Loop UI reflects selected range and enables repeat routing"
+dev:
+  files_to_touch:
+    - "src/services/rng.ts"
+    - "src/services/voicingUtils.ts"
+    - "src/components/LoopControls.tsx"
+    - "src/components/ProgressionDisplay.tsx"
+    - "src/App.tsx"
+    - "tests/unit/voicing.random.test.ts"
+    - "tests/unit/octaveOffset.test.ts"
+    - "tests/e2e/loop-ui.test.tsx"
+non_goals:
+  - "Global state store; changes remain in App state"
+risks:
+  - "Playback loop re-trigger may introduce a small gap; acceptable for minimal scope"

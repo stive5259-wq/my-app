@@ -16,6 +16,7 @@ type Props = {
   groupNext?: boolean[];
   groupAll?: boolean;
   onToggleGroupNext?: (index: number) => void;
+  onOctaveNudge?: (index: number, delta: 1 | -1) => void;
 };
 
 function clampIndex(i: number, len: number) {
@@ -36,6 +37,7 @@ export default function ProgressionDisplay(props: Props) {
     groupNext = [],
     groupAll = false,
     onToggleGroupNext,
+    onOctaveNudge,
   } = props;
 
   const handleDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
@@ -138,6 +140,30 @@ export default function ProgressionDisplay(props: Props) {
                 }}
               >
                 +
+              </button>
+              <button
+                type="button"
+                data-testid={`octave-up-${idx}`}
+                disabled={disabled}
+                title="Raise octave"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOctaveNudge?.(idx, +1);
+                }}
+              >
+                Octave ▲
+              </button>
+              <button
+                type="button"
+                data-testid={`octave-down-${idx}`}
+                disabled={disabled}
+                title="Lower octave"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOctaveNudge?.(idx, -1);
+                }}
+              >
+                Octave ▼
               </button>
               <button
                 type="button"

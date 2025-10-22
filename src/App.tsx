@@ -3,6 +3,9 @@ import { generateProgression, smartSwap, getChordDisplayName, type Progression, 
 import type { NoteName, Mode } from './core/theory';
 import { AudioPlayer } from './services/AudioPlayer';
 import { blobFromProgression, triggerDownload } from './services/MidiExporter';
+import LoopControls from './components/LoopControls';
+import { makeRng } from './services/rng';
+import { applyOctaveOffset, randomizeVoicing } from './services/voicingUtils';
 import { computeNoteEvents } from './services/grouping';
 import { Controls } from './components/Controls';
 import ProgressionDisplay from './components/ProgressionDisplay';
@@ -17,6 +20,8 @@ const MODES: Mode[] = ['major', 'minor', 'dorian', 'phrygian', 'lydian', 'mixoly
 const DEFAULT_KEY: NoteName = 'C';
 const DEFAULT_MODE: Mode = 'minor';
 
+const clamp = (value: number, minValue: number, maxValue: number) => Math.max(minValue, Math.min(maxValue, value));
+
 function App() {
   const [state, setState] = useState<AppState>('idle');
   const [progression, setProgression] = useState<Progression | null>(null);
@@ -29,6 +34,10 @@ function App() {
   const [selectedKey, setSelectedKey] = useState<NoteName>(DEFAULT_KEY);
   const [selectedMode, setSelectedMode] = useState<Mode>(DEFAULT_MODE);
   const [currentPlayingChord, setCurrentPlayingChord] = useState<number>(-1);
+  const [octaveOffsets, setOctaveOffsets] = useState<number[]>([]);
+  const [randomVoicingEnabled, setRandomVoicingEnabled] = useState(false);
+  const [randomSeed, setRandomSeed] = useState<string>('seed');
+  const [loop, setLoop] = useState<{ enabled: boolean; from: number; to: number }>({ enabled: false, from: 0, to: 0 });
   const audioPlayerRef = useRef<AudioPlayer>(new AudioPlayer());
   const {
     instrumentId,
@@ -38,6 +47,37 @@ function App() {
     selectInstrument,
     clearError: clearInstrumentError,
   } = useInstrument();
+
+  const buildPlayableProgression = useCallback((): { progression: Progression; groupNextSlice: boolean[]; groupAllActive: boolean } | null => {
+    if (!progression) return null;
+    const chords = progression.chords.map((chord, idx) => {
+      const offset = octaveOffsets[idx] || 0;
+      const baseNotes = applyOctaveOffset(chord.notes, offset);
+      const notes = randomVoicingEnabled
+        ? randomizeVoicing(baseNotes, makeRng(`${randomSeed}:${idx}`))
+        : baseNotes;
+      return { ...chord, notes };
+    });
+
+    let slicedChords = chords;
+    let groupNextSlice = groupNext.slice();
+    if (loop.enabled && chords.length > 0) {
+      const maxIndex = chords.length - 1;
+      const from = clamp(loop.from, 0, maxIndex);
+      const to = clamp(loop.to, from, maxIndex);
+      slicedChords = chords.slice(from, to + 1);
+      groupNextSlice = groupNext.slice(from, to + 1);
+      groupNextSlice = groupNextSlice.slice(0, Math.max(0, slicedChords.length - 1));
+    } else {
+      groupNextSlice = groupNextSlice.slice(0, Math.max(0, chords.length - 1));
+    }
+
+    return {
+      progression: { ...progression, chords: slicedChords },
+      groupNextSlice,
+      groupAllActive: groupAll,
+    };
+  }, [groupAll, groupNext, loop, octaveOffsets, progression, randomSeed, randomVoicingEnabled]);
 
   const handleGenerate = () => {
     setState('generating');
@@ -50,6 +90,9 @@ function App() {
         setProgression(prog);
         setGroupAll(false);
         setGroupNext(new Array(Math.max(0, prog.chords.length - 1)).fill(false));
+        setOctaveOffsets(new Array(prog.chords.length).fill(0));
+        setLoop({ enabled: false, from: 0, to: Math.max(0, prog.chords.length - 1) });
+        setRandomSeed('seed');
         setState('ready');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Generation failed');
@@ -61,7 +104,10 @@ function App() {
   const handlePlay = useCallback(async () => {
     if (!progression || state !== 'ready') return;
 
-    const groupingActive = groupAll || groupNext.some(Boolean);
+    const playableBundle = buildPlayableProgression();
+    if (!playableBundle) return;
+    const { progression: playable, groupNextSlice, groupAllActive } = playableBundle;
+    const groupingActive = groupAllActive || groupNextSlice.some(Boolean);
 
     setState('playing');
     setCurrentPlayingChord(0);
@@ -69,6 +115,11 @@ function App() {
     const handleEnd = () => {
       setState('ready');
       setCurrentPlayingChord(-1);
+      if (loop.enabled) {
+        setTimeout(() => {
+          void handlePlay();
+        }, 0);
+      }
     };
 
     const handleChordChange = (chordIndex: number) => {
@@ -77,17 +128,17 @@ function App() {
 
     try {
       if (groupingActive && audioPlayerRef.current.playWithEvents) {
-        const events = computeNoteEvents(progression, groupNext, groupAll);
+        const events = computeNoteEvents(playable, groupNextSlice, groupAllActive);
         await audioPlayerRef.current.playWithEvents(
           events,
-          progression,
+          playable,
           instrumentId,
           handleEnd,
           handleChordChange
         );
-      } else {
+      } else if (audioPlayerRef.current.play) {
         await audioPlayerRef.current.play(
-          progression,
+          playable,
           instrumentId,
           handleEnd,
           handleChordChange
@@ -99,7 +150,7 @@ function App() {
       setState('error');
       setCurrentPlayingChord(-1);
     }
-  }, [groupAll, groupNext, instrumentId, progression, state]);
+  }, [buildPlayableProgression, instrumentId, loop.enabled, progression, state]);
 
   const handleStop = useCallback(() => {
     if (state !== 'playing') return;
@@ -167,6 +218,12 @@ function App() {
       next.splice(toIndex, 0, moved);
       setGroupAll(false);
       setGroupNext([]);
+      setOctaveOffsets(new Array(next.length).fill(0));
+      setLoop({
+        enabled: false,
+        from: 0,
+        to: Math.max(0, next.length - 1),
+      });
       return { ...prev, chords: next };
     });
   };
@@ -196,6 +253,19 @@ function App() {
       const next = [...prev.chords];
       next.splice(index + 1, 0, clone);
       setGroupNext((arr) => arr.slice(0, index + 1).concat(false, arr.slice(index + 1)));
+      setOctaveOffsets((arr) => {
+        const a = arr.slice();
+        a.splice(index + 1, 0, 0);
+        return a;
+      });
+      setLoop((current) => {
+        const maxIndex = next.length - 1;
+        return {
+          enabled: current.enabled && current.from <= maxIndex && current.to <= maxIndex,
+          from: Math.min(current.from, maxIndex),
+          to: Math.min(Math.max(current.to, Math.min(current.from, maxIndex)), maxIndex),
+        };
+      });
       return { ...prev, chords: next };
     });
   };
@@ -210,6 +280,23 @@ function App() {
       next[i] = !next[i];
       return next;
     });
+  };
+
+  const handleOctaveNudge = (index: number, delta: 1 | -1) => {
+    setOctaveOffsets((arr) => {
+      const next = arr.slice();
+      next[index] = (next[index] || 0) + delta;
+      return next;
+    });
+  };
+
+  const toggleRandomVoicing = () => {
+    setRandomVoicingEnabled((value) => !value);
+    setRandomSeed((seed) => seed ?? 'seed');
+  };
+
+  const reseedVoicing = () => {
+    setRandomSeed(String(Date.now()));
   };
 
   const handleSpaceKey = useCallback((event: KeyboardEvent) => {
@@ -390,11 +477,12 @@ function App() {
             onPaste={state === 'ready' ? handlePaste : undefined}
             canPaste={!!clipboardChord}
             onAddAfter={state === 'ready' ? handleAddAfter : undefined}
+            onOctaveNudge={state === 'ready' ? handleOctaveNudge : undefined}
             groupAll={groupAll}
             groupNext={groupNext}
             onToggleGroupNext={state === 'ready' ? toggleGroupNext : undefined}
           />
-          <div style={{ marginTop: '0.75rem', display: 'flex', gap: 8 }}>
+          <div style={{ marginTop: '0.75rem', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
               type="button"
               data-testid="group-all-toggle"
@@ -402,6 +490,25 @@ function App() {
               onClick={toggleGroupAll}
             >
               {groupAll ? 'Group All: On' : 'Group All: Off'}
+            </button>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <input
+                type="checkbox"
+                data-testid="randomize-voicing-toggle"
+                checked={randomVoicingEnabled}
+                onChange={toggleRandomVoicing}
+                disabled={!progression}
+              />
+              Randomize Voicing
+            </label>
+            <button
+              type="button"
+              data-testid="randomize-voicing-reseed"
+              disabled={!progression}
+              onClick={reseedVoicing}
+              title={`Seed: ${randomSeed}`}
+            >
+              🎲 Reseed
             </button>
             <button
               type="button"
@@ -415,6 +522,24 @@ function App() {
               Export MIDI
             </button>
           </div>
+          <LoopControls
+            enabled={loop.enabled}
+            from={loop.from}
+            to={loop.to}
+            maxIndex={(progression.chords.length || 1) - 1}
+            onToggle={() => setLoop((current) => ({
+              ...current,
+              enabled: !current.enabled,
+            }))}
+            onSetFrom={(n) => setLoop((current) => ({
+              ...current,
+              from: Math.min(n, current.to),
+            }))}
+            onSetTo={(n) => setLoop((current) => ({
+              ...current,
+              to: Math.max(n, current.from),
+            }))}
+          />
         </>
       )}
       <PianoRoll progression={progression} />
