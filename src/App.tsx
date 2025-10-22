@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { generateProgression, smartSwap, getChordDisplayName, type Progression, type SwapMode, type Chord } from './core/generator';
 import type { NoteName, Mode } from './core/theory';
 import { AudioPlayer } from './services/AudioPlayer';
+import { blobFromProgression, triggerDownload } from './services/MidiExporter';
 import { Controls } from './components/Controls';
 import ProgressionDisplay from './components/ProgressionDisplay';
 import { PianoRoll } from './components/PianoRoll';
@@ -340,17 +341,32 @@ function App() {
       )}
 
       {progression && (
-        <ProgressionDisplay
-          chords={progression.chords.map((ch) => ({ ...ch, displayName: getChordDisplayName(ch) }))}
-          playingIndex={state === 'playing' ? currentPlayingChord : null}
-          disabled={state === 'generating' || state === 'playing'}
-          onSwap={state === 'ready' ? handleSwapChord : undefined}
-          onReorder={state === 'ready' ? handleReorder : undefined}
-          onCopy={state === 'ready' ? handleCopy : undefined}
-          onPaste={state === 'ready' ? handlePaste : undefined}
-          canPaste={!!clipboardChord}
-          onAddAfter={state === 'ready' ? handleAddAfter : undefined}
-        />
+        <>
+          <ProgressionDisplay
+            chords={progression.chords.map((ch) => ({ ...ch, displayName: getChordDisplayName(ch) }))}
+            playingIndex={state === 'playing' ? currentPlayingChord : null}
+            disabled={state === 'generating' || state === 'playing'}
+            onSwap={state === 'ready' ? handleSwapChord : undefined}
+            onReorder={state === 'ready' ? handleReorder : undefined}
+            onCopy={state === 'ready' ? handleCopy : undefined}
+            onPaste={state === 'ready' ? handlePaste : undefined}
+            canPaste={!!clipboardChord}
+            onAddAfter={state === 'ready' ? handleAddAfter : undefined}
+          />
+          <div style={{ marginTop: '0.75rem' }}>
+            <button
+              type="button"
+              data-testid="export-midi"
+              disabled={state === 'generating'}
+              onClick={() => {
+                const blob = blobFromProgression(progression);
+                triggerDownload(blob, `${progression.key}-${progression.mode}.mid`);
+              }}
+            >
+              Export MIDI
+            </button>
+          </div>
+        </>
       )}
       <PianoRoll progression={progression} />
     </div>
