@@ -1,18 +1,29 @@
-import type { Progression } from '../core/generator';
+import type { Progression, Chord } from '../core/generator';
 
 interface ProgressionDisplayProps {
   progression: Progression | null;
   onSwapChord?: (index: number) => void;
+  getDisplayName?: (chord: Chord) => string;
 }
 
-export function ProgressionDisplay({ progression, onSwapChord }: ProgressionDisplayProps) {
+export function ProgressionDisplay({ progression, onSwapChord, getDisplayName }: ProgressionDisplayProps) {
   if (!progression) {
     return null;
   }
 
+  const displayChord = (chord: Chord) => {
+    if (getDisplayName) {
+      return getDisplayName(chord);
+    }
+    return `${chord.root}${chord.quality}`;
+  };
+
   return (
     <div>
       <h2>Progression ({progression.tempoBpm} BPM)</h2>
+      <div style={{ color: '#888', fontSize: '0.85rem', marginTop: '-0.5rem', marginBottom: '1rem' }}>
+        {progression.key} {progression.mode.charAt(0).toUpperCase() + progression.mode.slice(1)}
+      </div>
       <div className="chord-list">
         {progression.chords.map((chord, index) => (
           <div
@@ -37,10 +48,15 @@ export function ProgressionDisplay({ progression, onSwapChord }: ProgressionDisp
             }}
           >
             <div className="chord-name">
-              {chord.root}{chord.quality}
+              {displayChord(chord)}
             </div>
+            {chord.function && (
+              <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
+                {chord.function}
+              </div>
+            )}
             {onSwapChord && (
-              <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
+              <div style={{ fontSize: '0.65rem', color: '#888', marginTop: '0.25rem' }}>
                 click to swap
               </div>
             )}

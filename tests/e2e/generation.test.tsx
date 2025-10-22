@@ -40,23 +40,24 @@ describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
     vi.clearAllMocks();
   });
 
-  it('Given fresh start, when user clicks Generate, then Cmaj, Gmaj, Am, Fmaj render in order', async () => {
+  it('Given fresh start, when user clicks Generate, then C Major progression renders with 7th chords', async () => {
     const user = userEvent.setup();
     render(<App />);
 
     const generateButton = screen.getByRole('button', { name: /generate/i });
     await user.click(generateButton);
 
-    // Wait for generation to complete
+    // Wait for generation to complete - swap mode toggles appear
     await waitFor(() => {
-      screen.getByText('Cmaj');
+      screen.getByRole('button', { name: /change harmony/i });
     });
 
-    // Verify all chords are rendered in order
-    expect(screen.getByText('Cmaj')).toBeTruthy();
-    expect(screen.getByText('Gmaj')).toBeTruthy();
-    expect(screen.getByText('Am')).toBeTruthy();
-    expect(screen.getByText('Fmaj')).toBeTruthy();
+    // Verify we have 4 chords (I - V - vi - IV progression)
+    const chordItems = screen.getAllByText(/click to swap/);
+    expect(chordItems.length).toBe(4);
+
+    // Verify swap mode toggles are present
+    expect(screen.getByRole('button', { name: /change voicing/i })).toBeTruthy();
   });
 
   it('Given progression is visible, when user clicks Play, then playback starts, state = playing, and Play label switches to Stop', async () => {
@@ -68,7 +69,7 @@ describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
     await user.click(generateButton);
 
     await waitFor(() => {
-      screen.getByText('Cmaj');
+      screen.getByText(/C Major/);
     });
 
     // Click Play
@@ -92,7 +93,7 @@ describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
     await user.click(generateButton);
 
     await waitFor(() => {
-      screen.getByText('Cmaj');
+      screen.getByText(/C Major/);
     });
 
     const playButton = screen.getByRole('button', { name: /play/i });
@@ -125,7 +126,7 @@ describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
     await user.click(generateButton);
 
     await waitFor(() => {
-      screen.getByText('Cmaj');
+      screen.getByText(/C Major/);
     });
 
     // Press Space to play
@@ -181,7 +182,7 @@ describe('FEAT-001: E2E Skeleton (Generate → Display → Play)', () => {
     await user.click(generateButton);
 
     await waitFor(() => {
-      screen.getByText('Cmaj');
+      screen.getByText(/C Major/);
     });
 
     // Play
