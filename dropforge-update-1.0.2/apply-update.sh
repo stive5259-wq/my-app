@@ -51,6 +51,41 @@ PYTHONPATH=. "$PY" -m unittest discover -s tests -v
 bash -n run.command
 if command -v node >/dev/null 2>&1; then node --check static/app.js; fi
 
+FIXTURE="$HOME/Music/DropForge/7b7acca2d452"
+if [[ -f "$FIXTURE/bass_16bar.wav" ]]; then
+  echo "Running the controlled bass regression on the existing Sun is Shining stem..."
+  FIXTURE="$FIXTURE" PYTHONPATH=. "$PY" - <<'PY_FIXTURE'
+import json
+import os
+from pathlib import Path
+
+from dropforge.bass import _basic_pitch_events
+from dropforge.midi import write_midi
+
+job = Path(os.environ["FIXTURE"])
+wav = job / "bass_16bar.wav"
+manifest = job / "manifest.json"
+bpm = 129.199
+if manifest.exists():
+    try:
+        bpm = float(json.loads(manifest.read_text())["analysis"]["bpm"])
+    except Exception:
+        pass
+
+notes, diag = _basic_pitch_events(wav, bpm, 0.48, 0.28, 85.0, 21, 60)
+print("Controlled fixture Basic Pitch events:", len(notes))
+print("note_max:", round(float(diag.get("note_max", 0.0)), 6),
+      "onset_max:", round(float(diag.get("onset_max", 0.0)), 6),
+      "contour_max:", round(float(diag.get("contour_max", 0.0)), 6))
+if not notes:
+    raise SystemExit("ERROR: controlled bass regression still produced zero events")
+out = job / "DropForge_Bass_RAW_1.0.2_VERIFY.mid"
+write_midi(out, notes, bpm, False, "DropForge Bass 1.0.2 VERIFY")
+print("Controlled fixture regression: PASS")
+print("Verification MIDI:", out)
+PY_FIXTURE
+fi
+
 if [[ -f "$APP/Contents/Info.plist" ]]; then
   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1.0.2" "$APP/Contents/Info.plist" >/dev/null 2>&1 || true
   /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.2" "$APP/Contents/Info.plist" >/dev/null 2>&1 || true
