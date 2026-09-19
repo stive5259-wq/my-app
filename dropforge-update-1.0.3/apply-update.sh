@@ -12,6 +12,16 @@ if [[ ! -d "$RUNTIME/dropforge" || ! -x "$RUNTIME/.venv/bin/python" ]]; then
   exit 1
 fi
 
+PY="$RUNTIME/.venv/bin/python"
+
+echo "Preflighting 1.0.3 update package..."
+bash -n "$HERE/run.command"
+"$PY" -m py_compile "$HERE"/dropforge/*.py
+if command -v node >/dev/null 2>&1; then
+  node --check "$HERE/static/app.js"
+fi
+echo "Update package preflight: PASS"
+
 if /usr/sbin/lsof -nP -iTCP:8765 -sTCP:LISTEN >/dev/null 2>&1; then
   if /usr/bin/curl -fsS http://127.0.0.1:8765/api/health 2>/dev/null | /usr/bin/grep -q '"app":"DropForge"'; then
     PIDS="$(/usr/sbin/lsof -tiTCP:8765 -sTCP:LISTEN || true)"
@@ -39,13 +49,14 @@ rsync -a "$HERE/dropforge/" "$RUNTIME/dropforge/"
 rsync -a "$HERE/static/" "$RUNTIME/static/"
 
 cd "$RUNTIME"
-PY="$RUNTIME/.venv/bin/python"
 
-echo "Running regression suite..."
+echo "Running installed regression suite..."
 PYTHONPATH=. "$PY" -m compileall -q app.py dropforge tests
 PYTHONPATH=. "$PY" -m unittest discover -s tests -v
 bash -n run.command
-if command -v node >/dev/null 2>&1; then node --check static/app.js; fi
+if command -v node >/dev/null 2>&1; then
+  node --check static/app.js
+fi
 
 if [[ -f "$APP/Contents/Info.plist" ]]; then
   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1.0.3" "$APP/Contents/Info.plist" >/dev/null 2>&1 || true
