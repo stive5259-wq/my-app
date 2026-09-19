@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DropForge</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <div class="eyebrow">NEURAL GROOVE EXTRACTION</div>
+        <h1>DropForge</h1>
+        <p>Turn a reference track into a downbeat-aligned 16-bar drum groove, register-preserving bass MIDI, and isolated stem pack.</p>
+      </div>
+      <span class="pill">Apple Silicon</span>
+    </header>
+
+    <section class="panel input-panel">
+      <div class="tabs">
+        <button class="tab active" data-mode="url">YouTube URL</button>
+        <button class="tab" data-mode="file">Local audio</button>
+      </div>
+      <form id="jobForm">
+        <div id="urlMode">
+          <input id="url" name="url" type="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" />
+          <p class="hint">Use only audio you are permitted to download/process.</p>
+        </div>
+        <div id="fileMode" class="hidden">
+          <label class="filedrop"><input id="file" name="file" type="file" accept="audio/*"/><span>Choose WAV / AIFF / MP3 / FLAC / M4A</span></label>
+        </div>
+        <button id="forge" class="primary" type="submit">Forge 16 bars</button>
+      </form>
+    </section>
+
+    <section id="progressPanel" class="panel hidden">
+      <div class="progress-head"><strong id="stage">Queued</strong><span id="pct">0%</span></div>
+      <div class="track"><div id="bar"></div></div>
+      <p id="message">Waiting…</p>
+      <div class="stages" id="stages">
+        <span>Acquire</span><span>Downbeat</span><span>Demix</span><span>Drums</span><span>Bass evidence</span><span>MIDI</span><span>Ready</span>
+      </div>
+    </section>
+
+    <section id="resultPanel" class="hidden">
+      <div class="meta-grid panel">
+        <div><span>TRACK</span><strong id="title">—</strong></div>
+        <div><span>BPM</span><strong id="bpm">—</strong></div>
+        <div><span>KEY</span><strong id="key">—</strong></div>
+        <div><span>DROP</span><strong id="drop">—</strong></div>
+      </div>
+
+      <div class="cards">
+        <article class="card accent">
+          <div class="card-kicker">MIDI 01</div>
+          <h2>Drum Kit</h2>
+          <p>Kick, snare/clap, hats/cymbal proxy. Neural onset classes, audio-derived velocities, microtiming retained.</p>
+          <a class="download" id="drumsMidi" draggable="true">Download / drag .MID</a>
+        </article>
+
+        <article class="card">
+          <div class="card-kicker">MIDI 02</div>
+          <h2>Bassline</h2>
+          <p>Basic Pitch note opportunities resolved with pYIN, Basic Pitch contour, and harmonic evidence. Absolute bass register is preserved.</p>
+          <a class="download" id="bassMidi" draggable="true">Download / drag .MID</a>
+          <div class="links"><a id="bassRawMidi">RAW Basic Pitch MIDI</a></div>
+        </article>
+
+        <article class="card">
+          <div class="card-kicker">STEM PACK</div>
+          <h2>All four Demucs stems</h2>
+          <p>Exact same selected 16 bars, split into drums, bass, vocals, and remaining instruments/effects.</p>
+          <div class="links">
+            <a id="drumsWav">Drums WAV</a>
+            <a id="bassWav">Bass WAV</a>
+            <a id="vocalsWav">Vocals WAV</a>
+            <a id="otherWav">Other WAV</a>
+            <a id="previewWav">Drums + Bass preview</a>
+          </div>
+        </article>
+      </div>
+
+      <div class="panel">
+        <div class="card-kicker">BASS EVIDENCE</div>
+        <p>Diagnostic view only: raw Basic Pitch candidates, final fused notes, pYIN track, Basic Pitch contour, and kick positions.</p>
+        <img id="bassEvidenceImg" alt="Bass evidence diagnostic" style="width:100%;height:auto;border-radius:10px;display:block;margin:12px 0;background:#0f1115;" />
+        <div class="links">
+          <a id="bassEvidenceSvg">Bass evidence SVG</a>
+          <a id="bassEvidenceJson">Bass evidence JSON</a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="card-kicker">QUICK PREVIEW</div>
+        <p>Drums + Bass</p>
+        <audio id="audio" controls></audio>
+        <p>Vocals</p>
+        <audio id="vocalsAudio" controls></audio>
+        <p>Other / instruments / FX</p>
+        <audio id="otherAudio" controls></audio>
+      </div>
+
+      <div class="actions">
+        <button id="reveal">Reveal folder in Finder</button>
+        <a id="manifest">Manifest</a>
+        <a id="diagnostics">Diagnostics</a>
+      </div>
+      <p class="disclaimer">DropForge is transcription assistance, not ground truth. In 1.0.4 ambiguous bass pitch decisions keep the strongest Basic Pitch candidate rather than forcing an octave correction. Estimated key is informational and does not snap chromatic bass notes.</p>
+    </section>
+
+    <section id="errorPanel" class="panel error hidden"><strong>Pipeline failed</strong><pre id="error"></pre></section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
