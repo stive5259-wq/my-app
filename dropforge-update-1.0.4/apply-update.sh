@@ -16,7 +16,7 @@ PY="$RUNTIME/.venv/bin/python"
 
 echo "Preflighting 1.0.4 update package..."
 bash -n "$HERE/run.command"
-"$PY" -m py_compile "$HERE"/dropforge/*.py "$HERE"/tests/*.py
+"$PY" -m py_compile "$HERE/app.py" "$HERE"/dropforge/*.py "$HERE"/tests/*.py
 if command -v node >/dev/null 2>&1; then
   node --check "$HERE/static/app.js"
 fi
@@ -43,6 +43,7 @@ echo "Backing up current DropForge source/config to: $BACKUP"
 rsync -a   --exclude '.venv'   --exclude '__pycache__'   --exclude '*.pyc'   "$RUNTIME/" "$BACKUP/"
 
 echo "Applying DropForge 1.0.4 bass-evidence update..."
+cp "$HERE/app.py" "$RUNTIME/app.py"
 cp "$HERE/run.command" "$RUNTIME/run.command"
 chmod +x "$RUNTIME/run.command"
 rsync -a "$HERE/dropforge/" "$RUNTIME/dropforge/"
